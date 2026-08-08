@@ -1,0 +1,8 @@
+{
+  "uuid": "ai-usage-widget@gaalbu.github.io",
+  "name": "AI Usage Widget",
+  "description": "A quiet desktop widget for Claude Code and Codex usage limits.",
+  "version": 1,
+  "shell-version": ["45", "46", "47", "48"],
+  "url": "https://github.com/Gaalbu/ai-usage-widget"
+}

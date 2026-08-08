@@ -1,0 +1,85 @@
+.ai-usage-card {
+  width: 330px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  color: rgba(255, 255, 255, 0.92);
+  background-color: rgba(20, 22, 28, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 10px 28px 0 rgba(0, 0, 0, 0.28);
+}
+
+.ai-usage-header {
+  margin-bottom: 13px;
+}
+
+.ai-usage-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ai-usage-updated {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.ai-usage-provider {
+  margin-top: 8px;
+  margin-bottom: 5px;
+}
+
+.ai-usage-provider-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-usage-provider-status {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.50);
+}
+
+.ai-usage-row {
+  margin-top: 7px;
+}
+
+.ai-usage-row-label,
+.ai-usage-row-value {
+  font-size: 11px;
+}
+
+.ai-usage-row-label {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.ai-usage-row-value {
+  font-weight: 700;
+}
+
+.ai-usage-bar {
+  height: 5px;
+  margin-top: 5px;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.10);
+}
+
+.ai-usage-bar-fill {
+  height: 5px;
+  border-radius: 3px;
+  background-color: #7aa2f7;
+}
+
+.ai-usage-bar-fill.claude {
+  background-color: #d79a72;
+}
+
+.ai-usage-error {
+  margin-top: 7px;
+  font-size: 10px;
+  color: rgba(255, 196, 196, 0.80);
+}
+
+.ai-usage-divider {
+  height: 1px;
+  margin-top: 11px;
+  margin-bottom: 2px;
+  background-color: rgba(255, 255, 255, 0.08);
+}
