@@ -11,7 +11,6 @@ const DEFAULT_CONFIG = {
     position: 'top-right',
     margin: 28,
 };
-const BAR_WIDTH = 330;
 
 function clamp(value, low, high) {
     return Math.min(high, Math.max(low, Number(value) || 0));
@@ -189,12 +188,16 @@ export default class AiUsageWidgetExtension extends Extension {
         line.add_child(label(`${usedPercent}%`, 'ai-usage-row-value'));
         container.add_child(line);
 
-        const track = new St.Widget({style_class: 'ai-usage-bar', width: BAR_WIDTH});
+        const track = new St.Widget({style_class: 'ai-usage-bar'});
         const fill = new St.Widget({
             style_class: `ai-usage-bar-fill ${colorClass}`,
-            width: Math.round(BAR_WIDTH * usedPercent / 100),
         });
         track.add_child(fill);
+        const updateFillWidth = () => {
+            fill.width = Math.round(track.width * usedPercent / 100);
+        };
+        track.connect('notify::width', updateFillWidth);
+        updateFillWidth();
         container.add_child(track);
 
         if (window.resetLabel)
