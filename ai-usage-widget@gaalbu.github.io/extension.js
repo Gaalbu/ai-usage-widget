@@ -181,17 +181,18 @@ export default class AiUsageWidgetExtension extends Extension {
     }
 
     _makeUsageRow(window, colorClass) {
+        const usedPercent = Math.round(clamp(window.usedPercent, 0, 100));
         const container = box(true, 'ai-usage-row');
         const line = box(false);
         line.add_child(label(window.label, 'ai-usage-row-label'));
         line.add_child(new St.Widget({x_expand: true}));
-        line.add_child(label(`${Math.round(window.usedPercent)}%`, 'ai-usage-row-value'));
+        line.add_child(label(`${usedPercent}%`, 'ai-usage-row-value'));
         container.add_child(line);
 
         const track = new St.Widget({style_class: 'ai-usage-bar', width: BAR_WIDTH});
         const fill = new St.Widget({
             style_class: `ai-usage-bar-fill ${colorClass}`,
-            width: Math.round(BAR_WIDTH * clamp(window.usedPercent, 0, 100) / 100),
+            width: Math.round(BAR_WIDTH * usedPercent / 100),
         });
         track.add_child(fill);
         container.add_child(track);
