@@ -10,7 +10,9 @@ import os
 import pathlib
 import selectors
 import shutil
+import stat
 import subprocess
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -20,6 +22,8 @@ VERSION = "0.1.0"
 CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 CLAUDE_BETA = "oauth-2025-04-20"
 CACHE_MAX_AGE_SECONDS = 30 * 60
+MAX_RESPONSE_BYTES = 1024 * 1024
+MAX_CACHE_BYTES = 256 * 1024
 
 
 class CollectorError(RuntimeError):
@@ -104,14 +108,17 @@ def collect_claude(timeout: float = 15) -> dict[str, Any]:
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            payload = json.load(response)
+            body = response.read(MAX_RESPONSE_BYTES + 1)
+            if len(body) > MAX_RESPONSE_BYTES:
+                raise CollectorError("Claude usage response was unexpectedly large")
+            payload = json.loads(body)
     except urllib.error.HTTPError as error:
         if error.code == 401:
             raise CollectorError("Claude login expired; open Claude Code to refresh it") from error
         if error.code == 429:
             raise CollectorError("Claude usage is temporarily rate-limited") from error
         raise CollectorError(f"Claude usage request failed (HTTP {error.code})") from error
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+    except (urllib.error.URLError, TimeoutError, UnicodeError, json.JSONDecodeError) as error:
         raise CollectorError("Claude usage service is unavailable") from error
 
     windows = parse_claude_usage(payload)
@@ -198,6 +205,7 @@ def collect_codex(timeout: float = 15) -> dict[str, Any]:
     except OSError as error:
         raise CollectorError("Could not start the Codex app-server") from error
 
+    selector = None
     try:
         assert process.stdin is not None and process.stdout is not None
         for message in messages:
@@ -211,9 +219,11 @@ def collect_codex(timeout: float = 15) -> dict[str, Any]:
         while time.monotonic() < deadline:
             if not selector.select(timeout=min(0.5, max(0, deadline - time.monotonic()))):
                 continue
-            line = process.stdout.readline()
+            line = process.stdout.readline(MAX_RESPONSE_BYTES + 1)
             if not line:
                 break
+            if len(line) > MAX_RESPONSE_BYTES:
+                raise CollectorError("Codex usage response was unexpectedly large")
             try:
                 message = json.loads(line)
             except json.JSONDecodeError:
@@ -222,12 +232,15 @@ def collect_codex(timeout: float = 15) -> dict[str, Any]:
                 response = message
                 break
     finally:
-        process.terminate()
-        try:
-            process.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=2)
+        if selector is not None:
+            selector.close()
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=2)
 
     if response is None:
         raise CollectorError("Codex usage request timed out")
@@ -241,29 +254,64 @@ def collect_codex(timeout: float = 15) -> dict[str, Any]:
 
 def collect_all() -> dict[str, Any]:
     cached = _read_cache()
+    now = int(time.time())
     providers = {}
+    cache_providers = {}
     for name, collector in (("claude", collect_claude), ("codex", collect_codex)):
+        previous = _fresh_cached_provider(cached, name, now)
         try:
-            providers[name] = collector()
+            current = collector()
+            providers[name] = current
+            cache_providers[name] = {
+                "cachedAt": now,
+                "windows": current.get("windows", []),
+            }
         except CollectorError as error:
-            previous = cached.get("providers", {}).get(name, {})
-            if previous.get("windows"):
+            if previous:
                 providers[name] = {
                     "status": "stale",
                     "message": str(error),
                     "windows": previous["windows"],
                 }
+                cache_providers[name] = previous
             else:
                 providers[name] = {"status": "error", "message": str(error), "windows": []}
         except Exception:
-            providers[name] = {
-                "status": "error",
-                "message": f"Unexpected {name.title()} collector error",
-                "windows": [],
-            }
-    result = {"version": 1, "updatedAt": int(time.time()), "providers": providers}
-    _write_cache(result)
+            message = f"Unexpected {name.title()} collector error"
+            if previous:
+                providers[name] = {
+                    "status": "stale",
+                    "message": message,
+                    "windows": previous["windows"],
+                }
+                cache_providers[name] = previous
+            else:
+                providers[name] = {"status": "error", "message": message, "windows": []}
+    result = {"version": 1, "updatedAt": now, "providers": providers}
+    _write_cache({"version": 2, "providers": cache_providers})
     return result
+
+
+def _fresh_cached_provider(
+    cached: dict[str, Any], name: str, now: float
+) -> dict[str, Any]:
+    providers = cached.get("providers")
+    if not isinstance(providers, dict):
+        return {}
+    previous = providers.get(name)
+    if not isinstance(previous, dict):
+        return {}
+    windows = previous.get("windows")
+    if not isinstance(windows, list) or not windows:
+        return {}
+    try:
+        cached_at = float(previous.get("cachedAt", cached.get("updatedAt")))
+    except (TypeError, ValueError):
+        return {}
+    age = now - cached_at
+    if age < 0 or age > CACHE_MAX_AGE_SECONDS:
+        return {}
+    return {"cachedAt": int(cached_at), "windows": windows}
 
 
 def _cache_path() -> pathlib.Path:
@@ -273,28 +321,52 @@ def _cache_path() -> pathlib.Path:
 
 def _read_cache() -> dict[str, Any]:
     path = _cache_path()
+    descriptor = None
     try:
-        if time.time() - path.stat().st_mtime > CACHE_MAX_AGE_SECONDS:
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(path, flags)
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > MAX_CACHE_BYTES:
             return {}
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, TypeError):
+        with os.fdopen(descriptor, encoding="utf-8") as stream:
+            descriptor = None
+            payload = json.load(stream)
+        return payload if isinstance(payload, dict) else {}
+    except (OSError, UnicodeError, json.JSONDecodeError, TypeError):
         return {}
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
 
 
 def _write_cache(payload: dict[str, Any]) -> None:
     path = _cache_path()
-    temporary = path.with_suffix(".tmp")
+    temporary = None
     try:
         path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        temporary.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
-        temporary.chmod(0o600)
+        parent_metadata = path.parent.lstat()
+        if not stat.S_ISDIR(parent_metadata.st_mode):
+            return
+        if stat.S_IMODE(parent_metadata.st_mode) & 0o077:
+            path.parent.chmod(0o700)
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=path.parent, prefix=".usage.", suffix=".tmp"
+        )
+        temporary = pathlib.Path(temporary_name)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(payload, stream, separators=(",", ":"))
+            stream.flush()
+            os.fsync(stream.fileno())
         temporary.replace(path)
     except OSError:
         # Caching is best-effort; a read-only home must not break live usage.
-        try:
-            temporary.unlink(missing_ok=True)
-        except OSError:
-            pass
+        pass
+    finally:
+        if temporary is not None:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def main() -> int:
