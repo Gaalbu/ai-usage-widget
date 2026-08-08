@@ -11,7 +11,7 @@ const DEFAULT_CONFIG = {
     position: 'top-right',
     margin: 28,
 };
-const BAR_WIDTH = 290;
+const BAR_WIDTH = 330;
 
 function clamp(value, low, high) {
     return Math.min(high, Math.max(low, Number(value) || 0));
