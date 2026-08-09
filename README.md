@@ -49,7 +49,7 @@ gnome-extensions enable ai-usage-widget@gaalbu.github.io
 To remove it:
 
 ```bash
-./scripts/uninstall.sh
+make uninstall
 ```
 
 The uninstaller moves the extension to your user trash instead of deleting it
