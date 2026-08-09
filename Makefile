@@ -1,6 +1,6 @@
 UUID := ai-usage-widget@gaalbu.github.io
 
-.PHONY: test package install
+.PHONY: test package install uninstall
 
 test:
 	python3 -m unittest discover -s tests -v
@@ -16,3 +16,6 @@ package:
 
 install:
 	./scripts/install.sh
+
+uninstall:
+	./scripts/uninstall.sh
