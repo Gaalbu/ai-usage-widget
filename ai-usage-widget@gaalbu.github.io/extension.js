@@ -75,6 +75,7 @@ export default class AiUsageWidgetExtension extends Extension {
         this._card = box(true, 'ai-usage-card');
         this._card.reactive = false;
         this._card.can_focus = false;
+        this._card.visible = false;
 
         const header = box(false, 'ai-usage-header');
         const title = label('AI usage', 'ai-usage-title');
@@ -89,12 +90,14 @@ export default class AiUsageWidgetExtension extends Extension {
             codex: this._makeProvider('Codex', 'codex'),
         };
         this._card.add_child(this._providers.claude.container);
-        this._card.add_child(new St.Widget({style_class: 'ai-usage-divider'}));
+        this._divider = new St.Widget({style_class: 'ai-usage-divider'});
+        this._card.add_child(this._divider);
         this._card.add_child(this._providers.codex.container);
     }
 
     _makeProvider(name, colorClass) {
         const container = box(true);
+        container.visible = false;
         const heading = box(false, 'ai-usage-provider');
         heading.add_child(label(name, 'ai-usage-provider-name'));
         heading.add_child(new St.Widget({x_expand: true}));
@@ -132,7 +135,7 @@ export default class AiUsageWidgetExtension extends Extension {
 
         try {
             this._process = Gio.Subprocess.new(
-                ['/usr/bin/python3', `${this.path}/collector.py`],
+                [`${this.path}/collector`],
                 Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
             );
             this._process.communicate_utf8_async(null, null, (process, result) => {
@@ -154,10 +157,14 @@ export default class AiUsageWidgetExtension extends Extension {
     }
 
     _render(data) {
+        let visibleProviders = 0;
         for (const name of ['claude', 'codex']) {
             const provider = data.providers?.[name] ?? {};
-            this._renderProvider(this._providers[name], provider);
+            if (this._renderProvider(this._providers[name], provider))
+                visibleProviders++;
         }
+        this._divider.visible = visibleProviders === 2;
+        this._card.visible = visibleProviders > 0;
         const time = new Date((data.updatedAt ?? Date.now() / 1000) * 1000);
         this._updated.text = time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
         this._placeWidget();
@@ -166,6 +173,10 @@ export default class AiUsageWidgetExtension extends Extension {
     _renderProvider(view, provider) {
         view.rows.destroy_all_children();
         const windows = provider.windows ?? [];
+        const visible = provider.configured === true || windows.length > 0;
+        view.container.visible = visible;
+        if (!visible)
+            return false;
         view.status.text = provider.status === 'ok'
             ? 'connected'
             : provider.status === 'stale' ? 'cached' : 'attention';
@@ -177,6 +188,7 @@ export default class AiUsageWidgetExtension extends Extension {
             view.rows.add_child(label(provider.message || 'No usage window available',
                 'ai-usage-error'));
         }
+        return true;
     }
 
     _makeUsageRow(window, colorClass) {
@@ -208,11 +220,17 @@ export default class AiUsageWidgetExtension extends Extension {
     _renderFailure(message) {
         const safeMessage = String(message).slice(0, 120);
         this._updated.text = 'offline';
+        let visibleProviders = 0;
         for (const provider of Object.values(this._providers)) {
+            if (!provider.container.visible)
+                continue;
+            visibleProviders++;
             provider.rows.destroy_all_children();
             provider.rows.add_child(label(safeMessage, 'ai-usage-error'));
             provider.status.text = 'attention';
         }
+        this._divider.visible = visibleProviders === 2;
+        this._card.visible = visibleProviders > 0;
         this._placeWidget();
     }
 }

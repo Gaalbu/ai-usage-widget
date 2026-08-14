@@ -15,14 +15,38 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-java@v4
         with:
-          python-version: "3.12"
+          distribution: temurin
+          java-version: '21'
+          cache: maven
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: '22'
       - run: make test
+      - run: mvn --batch-mode package
+      - run: java -jar target/ai-usage-widget-0.2.0-all.jar --pretty
+        env:
+          HOME: ${{ runner.temp }}/empty-home
+          XDG_CACHE_HOME: ${{ runner.temp }}/cache
+
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: graalvm-community
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: maven
+      - run: mvn --batch-mode -Pnative package
+      - run: target/ai-usage-widget --pretty
+        env:
+          HOME: ${{ runner.temp }}/empty-home
+          XDG_CACHE_HOME: ${{ runner.temp }}/cache
