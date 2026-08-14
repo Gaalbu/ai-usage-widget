@@ -1,21 +1,28 @@
 UUID := ai-usage-widget@gaalbu.github.io
+NATIVE := target/ai-usage-widget
 
-.PHONY: test package install uninstall
+.PHONY: test jar native package install uninstall clean
 
 test:
-	python3 -m unittest discover -s tests -v
-	python3 -m py_compile $(UUID)/collector.py tests/test_collector.py
+	mvn test
 	node --check $(UUID)/extension.js
-	bash -n scripts/install.sh scripts/uninstall.sh
+	bash -n scripts/install.sh scripts/uninstall.sh scripts/package.sh
 
-package:
-	gnome-extensions pack --force \
-		--extra-source=collector.py \
-		--extra-source=config.json \
-		$(UUID)
+jar:
+	mvn package
 
-install:
+native:
+	mvn -Pnative package
+
+package: native
+	./scripts/package.sh $(NATIVE)
+
+install: native
 	./scripts/install.sh
 
 uninstall:
 	./scripts/uninstall.sh
+
+clean:
+	mvn clean
+	rm -rf build dist

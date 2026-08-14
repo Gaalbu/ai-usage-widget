@@ -1,5 +1,10 @@
 {
   "refreshSeconds": 300,
   "position": "top-right",
-  "margin": 28
+  "margin": 28,
+  "scale": 1,
+  "minScale": 0.65,
+  "maxScale": 1.75,
+  "scaleStep": 0.1,
+  "theme": "dark"
 }

@@ -19,10 +19,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [python, javascript-typescript]
+        language: [java-kotlin, javascript-typescript]
     steps:
       - uses: actions/checkout@v7
+      - if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
       - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+      - if: matrix.language == 'java-kotlin'
+        run: mvn --batch-mode compile
       - uses: github/codeql-action/analyze@v4

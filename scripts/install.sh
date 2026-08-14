@@ -7,13 +7,41 @@ readonly PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 readonly SOURCE_DIR="$PROJECT_DIR/$UUID"
 readonly DEST_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensions/$UUID"
 readonly BACKUP_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/ai-usage-widget/backups"
-readonly EXTENSION_FILES=(
-    metadata.json
-    extension.js
-    stylesheet.css
-    collector.py
-    config.json
-)
+readonly EXTENSION_FILES=(metadata.json extension.js stylesheet.css config.json)
+
+enable_extension() {
+    if gnome-extensions enable "$UUID" 2>/dev/null; then
+        return
+    fi
+
+    # GNOME Shell does not discover newly installed extensions until the next
+    # login on Wayland. Register the UUID directly so that login loads it
+    # without requiring a second command from the user.
+    local current next
+    current="$(gsettings get org.gnome.shell enabled-extensions)"
+    if [[ "$current" == *"'$UUID'"* ]]; then
+        return
+    fi
+    if [[ "$current" == '[]' || "$current" == '@as []' ]]; then
+        next="['$UUID']"
+    else
+        next="${current%]}, '$UUID']"
+    fi
+    gsettings set org.gnome.shell enabled-extensions "$next"
+}
+
+collector_source="${AI_USAGE_COLLECTOR:-}"
+if [[ -z "$collector_source" && -x "$SOURCE_DIR/collector" ]]; then
+    collector_source="$SOURCE_DIR/collector"
+fi
+if [[ -z "$collector_source" && -x "$PROJECT_DIR/target/ai-usage-widget" ]]; then
+    collector_source="$PROJECT_DIR/target/ai-usage-widget"
+fi
+if [[ -z "$collector_source" || ! -x "$collector_source" ]]; then
+    echo "Native collector not found." >&2
+    echo "Use a Linux release archive, run 'make native', or set AI_USAGE_COLLECTOR." >&2
+    exit 1
+fi
 
 mkdir -p "$(dirname -- "$DEST_DIR")"
 if [[ -d "$DEST_DIR" ]]; then
@@ -29,13 +57,13 @@ for file in "${EXTENSION_FILES[@]}"; do
     cp -a -- "$SOURCE_DIR/$file" "$DEST_DIR/$file"
     chmod 644 "$DEST_DIR/$file"
 done
-chmod 700 "$DEST_DIR/collector.py"
+cp -a -- "$collector_source" "$DEST_DIR/collector"
+chmod 700 "$DEST_DIR/collector"
 
-echo "Installed $UUID"
+echo "Installed $UUID with the native Java collector"
+enable_extension
 if [[ ${XDG_SESSION_TYPE:-} == wayland ]]; then
-    echo "Wayland detected: log out and back in once, then run:"
-    echo "  gnome-extensions enable $UUID"
+    echo "Wayland detected: log out and back in once; the widget will start automatically."
 else
-    gnome-extensions enable "$UUID" || true
-    echo "If it is not visible yet, restart GNOME Shell and enable $UUID."
+    echo "The widget is enabled. Restart GNOME Shell if it is not visible yet."
 fi
