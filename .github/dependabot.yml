@@ -8,3 +8,10 @@ updates:
     groups:
       actions-minor-and-patch:
         update-types: [minor, patch]
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      maven-minor-and-patch:
+        update-types: [minor, patch]
