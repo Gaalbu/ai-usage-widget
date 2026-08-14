@@ -1,40 +1,165 @@
+/*
+ * Palette: Catppuccin (Mocha for dark/glass, Latte for light).
+ * https://catppuccin.com — chosen for high-contrast text on translucent
+ * surfaces and consistent accent hues across both light and dark modes.
+ */
+
 .ai-usage-card {
-  width: 330px;
-  padding: 18px 20px;
-  border-radius: 18px;
-  color: rgba(255, 255, 255, 0.92);
-  background-color: rgba(20, 22, 28, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 10px 28px 0 rgba(0, 0, 0, 0.28);
+  width: 340px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  font-family: "Cantarell", sans-serif;
+  transition-duration: 150ms;
+}
+
+.ai-usage-card.theme-dark {
+  color: #cdd6f4;
+  background-color: rgba(30, 30, 46, 0.88);
+  border: 1px solid rgba(205, 214, 244, 0.10);
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.35),
+              inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.ai-usage-card.theme-glass {
+  color: #cdd6f4;
+  background-color: rgba(30, 30, 46, 0.48);
+  border: 1px solid rgba(205, 214, 244, 0.16);
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.30),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.ai-usage-card.theme-light {
+  color: #4c4f69;
+  background-color: rgba(239, 241, 245, 0.94);
+  border: 1px solid rgba(76, 79, 105, 0.12);
+  box-shadow: 0 12px 28px 0 rgba(76, 79, 105, 0.18),
+              inset 0 1px 0 rgba(255, 255, 255, 0.50);
+}
+
+.ai-usage-card.minimized {
+  width: 40px;
+  padding: 8px;
+  border-radius: 13px;
 }
 
 .ai-usage-header {
-  margin-bottom: 13px;
+  margin-bottom: 12px;
 }
 
 .ai-usage-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
 .ai-usage-updated {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.48);
+  margin-right: 6px;
+}
+
+.theme-dark .ai-usage-updated,
+.theme-glass .ai-usage-updated {
+  color: rgba(205, 214, 244, 0.52);
+}
+
+.theme-light .ai-usage-updated {
+  color: rgba(76, 79, 105, 0.58);
+}
+
+.ai-usage-icon {
+  icon-size: 13px;
+}
+
+.ai-usage-window-button,
+.ai-usage-restore-button {
+  padding: 5px;
+  border-radius: 8px;
+  background-color: transparent;
+}
+
+.ai-usage-restore-button {
+  width: 24px;
+  height: 24px;
+}
+
+.theme-dark .ai-usage-window-button,
+.theme-glass .ai-usage-window-button,
+.theme-dark .ai-usage-restore-button,
+.theme-glass .ai-usage-restore-button {
+  color: rgba(205, 214, 244, 0.55);
+}
+
+.theme-dark .ai-usage-window-button:hover,
+.theme-glass .ai-usage-window-button:hover,
+.theme-dark .ai-usage-restore-button:hover,
+.theme-glass .ai-usage-restore-button:hover {
+  color: #cdd6f4;
+  background-color: rgba(205, 214, 244, 0.12);
+}
+
+.theme-light .ai-usage-window-button,
+.theme-light .ai-usage-restore-button {
+  color: rgba(76, 79, 105, 0.60);
+}
+
+.theme-light .ai-usage-window-button:hover,
+.theme-light .ai-usage-restore-button:hover {
+  color: #4c4f69;
+  background-color: rgba(76, 79, 105, 0.10);
 }
 
 .ai-usage-provider {
-  margin-top: 8px;
-  margin-bottom: 5px;
+  margin-top: 6px;
+  margin-bottom: 6px;
 }
 
 .ai-usage-provider-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
+}
+
+.ai-usage-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  margin-right: 6px;
+}
+
+.ai-usage-status-dot.ok {
+  background-color: #a6e3a1;
+}
+
+.ai-usage-status-dot.stale {
+  background-color: #f9e2af;
+}
+
+.ai-usage-status-dot.attention {
+  background-color: #f38ba8;
+}
+
+.theme-light .ai-usage-status-dot.ok {
+  background-color: #40a02b;
+}
+
+.theme-light .ai-usage-status-dot.stale {
+  background-color: #df8e1d;
+}
+
+.theme-light .ai-usage-status-dot.attention {
+  background-color: #d20f39;
 }
 
 .ai-usage-provider-status {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.50);
+}
+
+.theme-dark .ai-usage-provider-status,
+.theme-glass .ai-usage-provider-status {
+  color: rgba(205, 214, 244, 0.55);
+}
+
+.theme-light .ai-usage-provider-status {
+  color: rgba(76, 79, 105, 0.60);
 }
 
 .ai-usage-row {
@@ -46,40 +171,115 @@
   font-size: 11px;
 }
 
-.ai-usage-row-label {
-  color: rgba(255, 255, 255, 0.68);
-}
-
 .ai-usage-row-value {
   font-weight: 700;
+}
+
+.theme-dark .ai-usage-row-label,
+.theme-glass .ai-usage-row-label {
+  color: rgba(205, 214, 244, 0.72);
+}
+
+.theme-light .ai-usage-row-label {
+  color: rgba(76, 79, 105, 0.75);
 }
 
 .ai-usage-bar {
   height: 5px;
   margin-top: 5px;
   border-radius: 3px;
-  background-color: rgba(255, 255, 255, 0.10);
+}
+
+.theme-dark .ai-usage-bar,
+.theme-glass .ai-usage-bar {
+  background-color: rgba(205, 214, 244, 0.12);
+}
+
+.theme-light .ai-usage-bar {
+  background-color: rgba(76, 79, 105, 0.12);
 }
 
 .ai-usage-bar-fill {
   height: 5px;
   border-radius: 3px;
-  background-color: #7aa2f7;
+  background-color: #89b4fa;
 }
 
 .ai-usage-bar-fill.claude {
-  background-color: #d79a72;
+  background-color: #fab387;
+}
+
+.theme-light .ai-usage-bar-fill {
+  background-color: #1e66f5;
+}
+
+.theme-light .ai-usage-bar-fill.claude {
+  background-color: #fe640b;
 }
 
 .ai-usage-error {
-  margin-top: 7px;
+  margin-top: 6px;
   font-size: 10px;
-  color: rgba(255, 196, 196, 0.80);
+  color: #f38ba8;
+}
+
+.theme-light .ai-usage-error {
+  color: #d20f39;
 }
 
 .ai-usage-divider {
   height: 1px;
-  margin-top: 11px;
-  margin-bottom: 2px;
-  background-color: rgba(255, 255, 255, 0.08);
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
+.theme-dark .ai-usage-divider,
+.theme-glass .ai-usage-divider {
+  background-color: rgba(205, 214, 244, 0.08);
+}
+
+.theme-light .ai-usage-divider {
+  background-color: rgba(76, 79, 105, 0.10);
+}
+
+.ai-usage-menu {
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.theme-dark .ai-usage-menu,
+.theme-glass .ai-usage-menu {
+  border-top: 1px solid rgba(205, 214, 244, 0.10);
+}
+
+.theme-light .ai-usage-menu {
+  border-top: 1px solid rgba(76, 79, 105, 0.12);
+}
+
+.ai-usage-menu-item {
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.theme-dark .ai-usage-menu-item:hover,
+.theme-glass .ai-usage-menu-item:hover {
+  background-color: rgba(205, 214, 244, 0.08);
+}
+
+.theme-light .ai-usage-menu-item:hover {
+  background-color: rgba(76, 79, 105, 0.08);
+}
+
+.ai-usage-menu-label {
+  font-size: 11px;
+}
+
+.ai-usage-menu-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #89b4fa;
+}
+
+.theme-light .ai-usage-menu-value {
+  color: #1e66f5;
 }

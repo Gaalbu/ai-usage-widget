@@ -1,12 +1,14 @@
 # AI Usage Widget
 
-A quiet, click-through GNOME Shell widget that shows Claude Code and Codex
-usage windows on Ubuntu. Providers are independent and only configured
-providers are displayed.
+A quiet GNOME Shell widget that shows Claude Code and Codex usage windows on
+Ubuntu. Providers are independent and only configured providers are
+displayed.
 
-The widget stays on the wallpaper layer on Wayland: no taskbar icon, no focus
-stealing, and no always-on-top window. It supports GNOME 45–48 and targets
-Ubuntu 24.04 LTS.
+The widget has no taskbar icon and never appears in the window switcher or
+Overview. It supports GNOME 45–48 and targets Ubuntu 24.04 LTS. Unlike
+earlier releases, it is a normal interactive Shell element (not a
+click-through background layer): you can minimize it, drag it, resize it,
+and pick a theme, all with the mouse.
 
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04%20LTS-E95420?logo=ubuntu&logoColor=white)
 ![GNOME](https://img.shields.io/badge/GNOME-45--48-4A86CF?logo=gnome&logoColor=white)
@@ -123,9 +125,26 @@ The JAR is useful for development and diagnostics:
 java -jar target/ai-usage-widget-0.2.0-all.jar --pretty
 ```
 
-## Configure
+## Interact and customize
 
-Edit `config.json` in the installed extension directory:
+No config-file editing is required for day-to-day use:
+
+- **Drag** the header to move the widget anywhere on any monitor. Position is
+  saved automatically.
+- **Scroll** over the card to resize it (`scaleStep` per notch, clamped
+  between `minScale` and `maxScale`).
+- Click the **minimize** button (top-right of the header) to collapse the
+  widget to a small pill; click the pill to restore it.
+- **Right-click** the card to open a small menu: cycle the theme
+  (Dark → Light → Glass), reset position and size, or force an immediate
+  refresh.
+
+Theme and minimized state persist across restarts in
+`~/.config/ai-usage-widget/`. Layout (position, monitor, scale) is saved
+separately in `layout.json` in the same directory.
+
+For defaults applied before any interaction has happened, edit `config.json`
+in the installed extension directory:
 
 ```text
 ~/.local/share/gnome-shell/extensions/ai-usage-widget@gaalbu.github.io/config.json
@@ -137,12 +156,19 @@ Available values:
 {
   "refreshSeconds": 300,
   "position": "top-right",
-  "margin": 28
+  "margin": 28,
+  "scale": 1,
+  "minScale": 0.65,
+  "maxScale": 1.75,
+  "scaleStep": 0.1,
+  "theme": "dark"
 }
 ```
 
-`position` accepts `top-right`, `top-left`, `bottom-right`, or `bottom-left`.
-Disable and re-enable the extension after changing the file.
+`position` accepts `top-right`, `top-left`, `bottom-right`, or `bottom-left`,
+and only applies until the widget is first dragged. `theme` accepts `dark`,
+`light`, or `glass`. Disable and re-enable the extension after changing the
+file.
 
 ## Collector architecture and privacy
 
