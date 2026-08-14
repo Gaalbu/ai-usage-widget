@@ -27,7 +27,7 @@ jobs:
       - run: ./scripts/package.sh target/ai-usage-widget
       - run: cp target/ai-usage-widget-0.2.0-all.jar dist/
       - run: cd dist && sha256sum * > SHA256SUMS
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           files: |
