@@ -72,12 +72,10 @@ export default class AiUsageWidgetExtension extends Extension {
         this._menuOpen = false;
         this._buildUi();
 
-        // Registered as Shell chrome (not the click-through background layer)
-        // so the minimize button and drag handle receive real pointer input.
-        Main.layoutManager.addChrome(this._card, {
-            affectsInputRegion: true,
-            trackFullscreen: true,
-        });
+        // Keep the widget in the desktop background layer. This gives normal
+        // application windows (including maximized ones) visual priority,
+        // while the widget remains interactive whenever the desktop is shown.
+        this._addToDesktopLayer();
         this._monitorSignal = Main.layoutManager.connect('monitors-changed',
             () => this._placeWidget());
         this._outsideClickSignal = global.stage.connect('button-press-event',
@@ -115,11 +113,32 @@ export default class AiUsageWidgetExtension extends Extension {
             this._process.force_exit();
         this._process = null;
         if (this._card) {
-            Main.layoutManager.removeChrome(this._card);
+            if (this._desktopLayer === Main.layoutManager)
+                Main.layoutManager.removeChrome(this._card);
+            else if (this._desktopLayer)
+                this._desktopLayer.remove_child(this._card);
             this._card.destroy();
         }
         this._card = null;
         this._menu = null;
+        this._desktopLayer = null;
+    }
+
+    _addToDesktopLayer() {
+        const backgroundGroup = Main.layoutManager._backgroundGroup;
+        if (backgroundGroup) {
+            backgroundGroup.add_child(this._card);
+            this._desktopLayer = backgroundGroup;
+            return;
+        }
+
+        // Older or customized Shell versions may not expose the background
+        // group. Keep the extension usable there with the regular chrome API.
+        Main.layoutManager.addChrome(this._card, {
+            affectsInputRegion: true,
+            trackFullscreen: true,
+        });
+        this._desktopLayer = Main.layoutManager;
     }
 
     _readConfig() {
