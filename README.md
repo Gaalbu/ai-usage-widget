@@ -5,7 +5,9 @@ Ubuntu. Providers are independent and only configured providers are
 displayed.
 
 The widget has no taskbar icon and never appears in the window switcher or
-Overview. It supports GNOME 45–48 and targets Ubuntu 24.04 LTS. Unlike
+Overview. It stays below application windows, including maximized ones, and
+remains interactive when the desktop is visible. It supports GNOME 45–48 and
+targets Ubuntu 24.04 LTS. Unlike
 earlier releases, it is a normal interactive Shell element (not a
 click-through background layer): you can minimize it, drag it, resize it,
 and pick a theme, all with the mouse.

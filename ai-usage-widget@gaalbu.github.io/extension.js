@@ -269,11 +269,15 @@ export default class AiUsageWidgetExtension extends Extension {
         header.reactive = true;
         header.track_hover = true;
         header.connect('button-press-event', (_actor, event) => this._onHeaderButtonPress(event));
-        const title = label('AI usage', 'ai-usage-title');
-        this._updated = label('updating…', 'ai-usage-updated');
+        const title = label('AI Usage', 'ai-usage-title');
+        this._updated = label('Updating…', 'ai-usage-updated');
         header.add_child(title);
         header.add_child(new St.Widget({x_expand: true}));
         header.add_child(this._updated);
+        this._refreshButton = iconButton('view-refresh-symbolic',
+            'ai-usage-window-button', 'Refresh usage now');
+        this._refreshButton.connect('clicked', () => this._refresh());
+        header.add_child(this._refreshButton);
         this._minimizeButton = iconButton('window-minimize-symbolic',
             'ai-usage-window-button', 'Minimize AI usage widget');
         this._minimizeButton.connect('clicked', () => this._setMinimized(true));
@@ -315,12 +319,12 @@ export default class AiUsageWidgetExtension extends Extension {
         this._menu.add_child(themeButton);
 
         const resetButton = new St.Button({style_class: 'ai-usage-menu-item', can_focus: false});
-        resetButton.set_child(label('Reset position && size', 'ai-usage-menu-label'));
+        resetButton.set_child(label('Reset position and size', 'ai-usage-menu-label'));
         resetButton.connect('clicked', () => this._resetLayout());
         this._menu.add_child(resetButton);
 
         const refreshButton = new St.Button({style_class: 'ai-usage-menu-item', can_focus: false});
-        refreshButton.set_child(label('Refresh now', 'ai-usage-menu-label'));
+        refreshButton.set_child(label('Refresh usage now', 'ai-usage-menu-label'));
         refreshButton.connect('clicked', () => {
             this._closeMenu();
             this._refresh();
@@ -371,7 +375,7 @@ export default class AiUsageWidgetExtension extends Extension {
         heading.add_child(label(name, 'ai-usage-provider-name'));
         heading.add_child(new St.Widget({x_expand: true}));
         const status = new St.Widget({style_class: `ai-usage-status-dot ${colorClass}`});
-        const statusLabel = label('waiting', 'ai-usage-provider-status');
+        const statusLabel = label('Waiting', 'ai-usage-provider-status');
         heading.add_child(status);
         heading.add_child(statusLabel);
         container.add_child(heading);
@@ -585,7 +589,7 @@ export default class AiUsageWidgetExtension extends Extension {
     _refresh() {
         if (this._process)
             return;
-        this._updated.text = 'updating…';
+        this._updated.text = 'Updating…';
 
         try {
             this._process = Gio.Subprocess.new(
@@ -621,7 +625,7 @@ export default class AiUsageWidgetExtension extends Extension {
         this._hasVisibleProviders = visibleProviders > 0;
         this._syncPresentation();
         const time = new Date((data.updatedAt ?? Date.now() / 1000) * 1000);
-        this._updated.text = time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        this._updated.text = 'Updated ' + time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
         this._placeWidget();
     }
 
@@ -636,7 +640,7 @@ export default class AiUsageWidgetExtension extends Extension {
             ? 'ok' : provider.status === 'stale' ? 'stale' : 'attention';
         view.status.style_class = `ai-usage-status-dot ${view.colorClass} ${status}`;
         view.statusLabel.text = status === 'ok'
-            ? 'connected' : status === 'stale' ? 'cached' : 'attention';
+            ? 'Connected' : status === 'stale' ? 'Cached' : 'Needs attention';
 
         for (const window of windows)
             view.rows.add_child(this._makeUsageRow(window, view.colorClass));
@@ -676,7 +680,7 @@ export default class AiUsageWidgetExtension extends Extension {
 
     _renderFailure(message) {
         const safeMessage = String(message).slice(0, 120);
-        this._updated.text = 'offline';
+        this._updated.text = 'Offline';
         let visibleProviders = 0;
         for (const provider of Object.values(this._providers)) {
             if (!provider.container.visible)
@@ -685,7 +689,7 @@ export default class AiUsageWidgetExtension extends Extension {
             provider.rows.destroy_all_children();
             provider.rows.add_child(label(safeMessage, 'ai-usage-error'));
             provider.status.style_class = `ai-usage-status-dot ${provider.colorClass} attention`;
-            provider.statusLabel.text = 'attention';
+            provider.statusLabel.text = 'Needs attention';
         }
         this._divider.visible = visibleProviders === 2;
         this._hasVisibleProviders = visibleProviders > 0;

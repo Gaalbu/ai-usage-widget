@@ -256,6 +256,10 @@
   border-top: 1px solid rgba(76, 79, 105, 0.12);
 }
 
+.ai-usage-menu-row {
+  spacing: 12px;
+}
+
 .ai-usage-menu-item {
   padding: 6px 8px;
   border-radius: 8px;
